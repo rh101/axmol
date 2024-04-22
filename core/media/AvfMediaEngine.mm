@@ -13,15 +13,20 @@
 #    import <UIKit/UIKit.h>
 #endif
 
+#import <AVKit/AVPlayerViewController.h>
+#import "platform/ios/EAGLView-ios.h"
+
 USING_NS_AX;
 
 #define AX_ALIGN_ANY(x, a) ((((x) + (a) - 1) / (a)) * (a))
 
 @interface AVMediaSessionHandler : NSObject
+
 - (AVMediaSessionHandler*)initWithMediaEngine:(AvfMediaEngine*)me;
 - (void)dealloc;
 - (void)playerItemDidPlayToEndTime:(NSNotification*)notification;
 @property AvfMediaEngine* _me;
+
 @end
 
 @implementation AVMediaSessionHandler
@@ -30,7 +35,6 @@ USING_NS_AX;
 - (AVMediaSessionHandler*)initWithMediaEngine:(AvfMediaEngine*)me
 {
     self = [super init];
-    if (self)
         _me = me;
     return self;
 }
@@ -81,7 +85,6 @@ USING_NS_AX;
     if (_me->isPlaying())
         _me->internalPause();
 }
-
 
 - (void)handleEnterForground:(NSNotification*)notification
 {
@@ -190,13 +193,28 @@ bool AvfMediaEngine::open(std::string_view sourceUri)
 
     // create player instance
     _player = [[AVPlayer alloc] init];
-
+    
     if (!_player)
     {
         AXME_TRACE("Failed to create instance of an AVPlayer: %s", sourceUri.data());
         return false;
     }
 
+    _playerController = [[AVPlayerViewController alloc] init];
+    _playerController.player = _player;
+    _playerController.view.userInteractionEnabled = _userInteractionEnabled;
+    _playerController.showsPlaybackControls = _showPlaybackControls;
+    
+    auto glView = ax::Director::getInstance()->getGLView();
+    EAGLView* eaglView = (__bridge EAGLView*)glView->getEAGLView();
+
+    if (eaglView)
+    {
+        _playerController.view.opaque = NO;
+        _playerController.view.backgroundColor = UIColor.clearColor;
+        [eaglView addSubview:_playerController.view];
+    }
+    
     _player.actionAtItemEnd = AVPlayerActionAtItemEndPause;
 
     // create player item
@@ -252,6 +270,7 @@ bool AvfMediaEngine::open(std::string_view sourceUri)
 
     // TODO: handle EnterForground, EnterBackground, Active, Deactive, AudioRouteChanged
     [_sessionHandler registerUINotifications];
+    
     return true;
 }
 
@@ -423,6 +442,14 @@ bool AvfMediaEngine::close()
         [_playerItem release];
         _playerItem = nil;
     }
+    
+    if (_playerController != nil)
+    {
+        [_playerController.view removeFromSuperview];
+        [_playerController release];
+        _playerController = nil;
+    }
+    
     if (_player != nil)
     {
         [_player release];
@@ -507,6 +534,28 @@ bool AvfMediaEngine::stop()
 MEMediaState AvfMediaEngine::getState() const
 {
     return _state;
+}
+
+void AvfMediaEngine::setViewRect(int left, int top, int width, int height)
+{
+    _left = left;
+    _width = width;
+    _top = top;
+    _height = height;
+    
+    [_playerController.view setFrame:CGRectMake(left, top, width, height)];
+}
+
+void AvfMediaEngine::showPlaybackControls(bool value)
+{
+    _showPlaybackControls = value;
+    _playerController.showsPlaybackControls = value;
+}
+
+void AvfMediaEngine::setUserInteractionEnabled(bool enabled)
+{
+    _userInteractionEnabled = enabled;
+    _playerController.view.userInteractionEnabled = _userInteractionEnabled;
 }
 
 NS_AX_END

@@ -205,6 +205,9 @@ public:
     virtual bool isPlaybackEnded() const                                             = 0;
     virtual MEMediaState getState() const                                            = 0;
     virtual bool transferVideoFrame()                                                = 0;
+    virtual void setViewRect(int left, int top, int width, int height)               = 0;
+    virtual void showPlaybackControls(bool value)                                    = 0;
+    virtual void setUserInteractionEnabled(bool enabled)                             = 0;
 };
 
 class MediaEngineFactory

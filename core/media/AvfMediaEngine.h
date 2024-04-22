@@ -5,6 +5,7 @@
 #if defined(__APPLE__)
 
 #    import <AVFoundation/AVFoundation.h>
+#    import <AVKit/AVPlayerViewController.h>
 
 @class AVMediaSessionHandler;
 
@@ -46,6 +47,10 @@ public:
     void internalPlay(bool replay = false);
     void internalPause();
 
+    void setViewRect(int left, int top, int width, int height) override;
+    void showPlaybackControls(bool value) override;
+    void setUserInteractionEnabled(bool enabled) override;
+    
 private:
     std::function<void(MEMediaEventType)> _onMediaEvent;
     std::function<void(const MEVideoFrame&)> _onVideoFrame;
@@ -53,6 +58,7 @@ private:
     MEMediaState _state = MEMediaState::Closed;
     int _videoRotation{0};
     MEIntPoint _videoExtent;
+    AVPlayerViewController* _playerController = nil;
     AVPlayer* _player = nil;
     AVPlayerItem* _playerItem = nil;
     AVPlayerItemOutput* _playerOutput = nil;
@@ -62,6 +68,13 @@ private:
     bool _repeatEnabled = false;
     bool _playbackEnded = false;
 
+    int _left = 0;
+    int _top = 0;
+    int _width = 0;
+    int _height = 0;
+    bool _showPlaybackControls = true;
+    bool _userInteractionEnabled = true;
+    
     /*
     true: luma=[0,255] chroma=[1,255]
     false: luma=[16,235] chroma=[16,240]

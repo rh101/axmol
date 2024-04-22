@@ -31,6 +31,7 @@ macro(ax_depend)
         find_library(METAL_LIBRARY Metal)
         find_library(COREVIDEO_LIBRARY CoreVideo)
         find_library(AVFOUNDATION_LIBRARY AVFoundation)
+        find_library(AVKIT_LIBRARY AVKit)
         find_library(COREMEDIA_LIBRARY CoreMedia)
         set(_AX_APPLE_LIBS
             ${AUDIOTOOLBOX_LIBRARY}
@@ -40,6 +41,7 @@ macro(ax_depend)
             ${METAL_LIBRARY}
             ${COREVIDEO_LIBRARY}
             ${AVFOUNDATION_LIBRARY}
+            ${AVKIT_LIBRARY}
             ${COREMEDIA_LIBRARY}
             )
 

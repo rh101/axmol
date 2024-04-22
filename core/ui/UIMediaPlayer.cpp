@@ -372,7 +372,9 @@ void MediaPlayer::draw(Renderer* renderer, const Mat4& transform, uint32_t flags
 void MediaPlayer::setContentSize(const Size& contentSize)
 {
     Widget::setContentSize(contentSize);
-    reinterpret_cast<PrivateVideoDescriptor*>(_videoContext)->_originalViewSize = contentSize;
+    auto videoContext = reinterpret_cast<PrivateVideoDescriptor*>(_videoContext);
+    videoContext->_originalViewSize = contentSize;
+    updatePlayerView();
 }
 
 void MediaPlayer::setFullScreenEnabled(bool enabled)
@@ -421,9 +423,12 @@ void MediaPlayer::play()
             switch (engine->getState())
             {
             case MEMediaState::Closed:
-                engine->setAutoPlay(true);
-                engine->open(_videoURL);
-                break;
+                {
+                    engine->setAutoPlay(true);
+                    engine->open(_videoURL);
+                    updatePlayerView();
+                    break;
+                }
             default:
                 engine->play();
             }
@@ -545,6 +550,25 @@ void MediaPlayer::copySpecialProperties(Widget* widget)
         _videoSource            = videoPlayer->_videoSource;
         _videoPlayerIndex       = videoPlayer->_videoPlayerIndex;
         _eventCallback          = videoPlayer->_eventCallback;
+    }
+}
+
+void MediaPlayer::updatePlayerView()
+{
+    auto videoContext = reinterpret_cast<PrivateVideoDescriptor*>(_videoContext);
+    auto engine = videoContext->_engine;
+    if (engine)
+    {
+        auto boundingBox = getBoundingBox();
+        auto* director = Director::getInstance();
+        auto view = director->getGLView();
+        const auto designScale = view->getScaleX();
+        const auto contentScaleFactor = view->getContentScaleFactor();
+        const auto& viewPortRect = view->getViewPortRect();
+        const auto visibleSize = view->getVisibleSize();
+        const auto framePosX = (viewPortRect.origin.x + 0.5f + (boundingBox.getMinX() * designScale)) / contentScaleFactor;
+        const auto framePosY = (viewPortRect.origin.y + 0.5f + ((visibleSize.height - boundingBox.getMaxY()) * designScale)) / contentScaleFactor;
+        engine->setViewRect(framePosX, framePosY, (boundingBox.size.width + 0.5f) * designScale / contentScaleFactor, (boundingBox.size.height + 0.5f) * designScale / contentScaleFactor);
     }
 }
 

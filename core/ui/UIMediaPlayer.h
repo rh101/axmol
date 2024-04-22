@@ -243,6 +243,8 @@ protected:
     virtual ax::ui::Widget* createCloneInstance() override;
     virtual void copySpecialProperties(Widget* model) override;
 
+    virtual void updatePlayerView();
+    
 #    if AX_VIDEOPLAYER_DEBUG_DRAW
     DrawNode* _debugDrawNode;
 #    endif
