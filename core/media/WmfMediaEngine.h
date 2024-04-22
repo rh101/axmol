@@ -179,6 +179,10 @@ public:
 
     bool isPlaybackEnded() const override { return m_bPlaybackEnded; }
 
+    void setViewRect(int left, int top, int width, int height) override {}
+    void showPlaybackControls(bool value) override {}
+    void setUserInteractionEnabled(bool enabled) override {}
+    
     void HandleVideoSample(const uint8_t* buf, size_t len);
     //bool GetLastVideoSample(MEVideoTextueSample& sample) const override;
 

@@ -35,6 +35,10 @@ public:
     MEMediaState getState() const override;
     bool transferVideoFrame() override;
 
+    void setViewRect(int left, int top, int width, int height) override {}
+    void showPlaybackControls(bool value) override {}
+    void setUserInteractionEnabled(bool enabled) override {}
+
     void handleVideoSample(const uint8_t* buf, size_t len, int outputX, int outputY, int videoX, int videoY, int rotation);
 
 private:

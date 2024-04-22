@@ -37,7 +37,11 @@ public:
     bool isPlaybackEnded() const override { return _playbackEnded; }
     MEMediaState getState() const override;
     bool transferVideoFrame() override;
-
+    
+    void setViewRect(int left, int top, int width, int height) override {}
+    void showPlaybackControls(bool value) override {}
+    void setUserInteractionEnabled(bool enabled) override {}
+    
     void handleEvent(MEMediaEventType event);
 
     bool updatePlaybackProperties();

@@ -92,6 +92,10 @@ public:
 
     MEMediaState getState() const override { return m_state; }
 
+    void setViewRect(int left, int top, int width, int height) override {}
+    void showPlaybackControls(bool value) override {}
+    void setUserInteractionEnabled(bool enabled) override {}
+
     void SetMuted(bool muted);
 
     // Callbacks
