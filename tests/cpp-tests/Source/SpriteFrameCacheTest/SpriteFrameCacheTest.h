@@ -56,9 +56,11 @@ public:
     virtual std::string subtitle() const override { return "It shouldn't crash"; }
 
     SpriteFrameCacheLoadMultipleTimes();
+    void onExit() override;
 
 private:
-    void loadSpriteFrames(std::string_view file, ax::backend::PixelFormat expectedFormat);
+    std::string_view _scheduleKey = "SpriteFrameCacheLoadMultipleTimes"sv;
+    size_t _idx = 0;
 };
 
 class SpriteFrameCacheFullCheck : public TestCase
@@ -71,8 +73,13 @@ public:
 
     SpriteFrameCacheFullCheck();
 
+    void onExit() override;
+
 private:
-    void loadSpriteFrames(std::string_view file, ax::backend::PixelFormat expectedFormat);
+    void loadSpriteFrames(std::string_view file);
+
+    std::string_view _scheduleKey = "SpriteFrameCacheFullCheck"sv;
+    size_t _idx = 0;
 };
 
 class SpriteFrameCacheJsonAtlasTest : public TestCase

@@ -95,50 +95,128 @@ void SpriteFrameCachePixelFormatTest::loadSpriteFrames(std::string_view file,
 
 SpriteFrameCacheLoadMultipleTimes::SpriteFrameCacheLoadMultipleTimes()
 {
-    const Size screenSize = Director::getInstance()->getWinSize();
-
+    auto cache            = SpriteFrameCache::getInstance();
     // load atlas definition with specified PixelFormat and check that it matches to expected format
-    loadSpriteFrames("Images/sprite_frames_test/test_RGBA8888.plist", backend::PixelFormat::RGBA8);
-    loadSpriteFrames("Images/sprite_frames_test/test_RGBA8888.plist", backend::PixelFormat::RGBA8);
-    loadSpriteFrames("Images/sprite_frames_test/test_RGBA8888.plist", backend::PixelFormat::RGBA8);
-    loadSpriteFrames("Images/sprite_frames_test/test_RGBA8888.plist", backend::PixelFormat::RGBA8);
+    cache->addSpriteFramesWithFile("Images/sprite_frames_test/test_RGBA8888.plist");
+    SpriteFrame* spriteFrame = cache->getSpriteFrameByName("sprite_frames_test/grossini.png");
+    Texture2D* texture       = spriteFrame->getTexture();
+    cache->removeSpriteFrameByName("sprite_frames_test/grossini.png");
+    Director::getInstance()->getTextureCache()->removeTexture(texture);
+    cache->addSpriteFramesWithFile("Images/sprite_frames_test/test_RGBA8888.plist");
+    cache->addSpriteFramesWithFile("Images/sprite_frames_test/test_RGBA8888.plist");
+    cache->addSpriteFramesWithFile("Images/sprite_frames_test/test_RGBA8888.plist");
+
+    std::vector<std::function<void()>> sequence;
+    sequence.emplace_back(
+        [this, cache] {
+        cache->addSpriteFramesWithFile("Images/sprite_frames_test/test_RGBA8888.plist");
+    });
+    sequence.emplace_back(
+        [this, cache] {
+        SpriteFrame* spriteFrame = cache->getSpriteFrameByName("sprite_frames_test/grossini.png");
+        Texture2D* texture = spriteFrame->getTexture();
+        cache->removeSpriteFrameByName("sprite_frames_test/grossini.png");
+        Director::getInstance()->getTextureCache()->removeTexture(texture);
+    });
+    sequence.emplace_back(
+        [this, cache] {
+        cache->addSpriteFramesWithFile("Images/sprite_frames_test/test_RGBA8888.plist");
+    });
+    sequence.emplace_back(
+        [this, cache] {
+        cache->addSpriteFramesWithFile("Images/sprite_frames_test/test_RGBA8888.plist");
+    });
+
+    unschedule(_scheduleKey);
+    _idx = 0;
+
+    schedule([this, sequence](float) {
+        if (_idx < sequence.size())
+        {
+            AXLOGD("{} sequence: {}", _scheduleKey, _idx);
+            sequence[_idx]();
+            ++_idx;
+        }
+        else
+        {
+            unschedule(_scheduleKey);
+        }
+    }, 0.f, _scheduleKey);
 }
 
-void SpriteFrameCacheLoadMultipleTimes::loadSpriteFrames(std::string_view file,
-                                                         ax::backend::PixelFormat expectedFormat)
+void SpriteFrameCacheLoadMultipleTimes::onExit()
 {
-    SpriteFrameCache::getInstance()->addSpriteFramesWithFile(file);
-    SpriteFrame* spriteFrame = SpriteFrameCache::getInstance()->getSpriteFrameByName("sprite_frames_test/grossini.png");
-    Texture2D* texture       = spriteFrame->getTexture();
-
-    SpriteFrameCache::getInstance()->removeSpriteFrameByName("sprite_frames_test/grossini.png");
-    Director::getInstance()->getTextureCache()->removeTexture(texture);
+    unschedule(_scheduleKey);
+    TestCase::onExit();
 }
 
 SpriteFrameCacheFullCheck::SpriteFrameCacheFullCheck()
 {
-    const Size screenSize = Director::getInstance()->getWinSize();
     // load atlas definition with specified PixelFormat and check that it matches to expected format
-    loadSpriteFrames("Images/test_polygon.plist", backend::PixelFormat::RGBA8);
+    loadSpriteFrames("Images/test_polygon.plist");
 }
 
-void SpriteFrameCacheFullCheck::loadSpriteFrames(std::string_view file, ax::backend::PixelFormat expectedFormat)
+void SpriteFrameCacheFullCheck::onExit()
 {
+    unschedule(_scheduleKey);
+    TestCase::onExit();
+}
+
+void SpriteFrameCacheFullCheck::loadSpriteFrames(std::string_view file)
+{
+    std::vector<std::function<void()>> sequence;
     auto cache = SpriteFrameCache::getInstance();
+    sequence.emplace_back([cache, file] {
+        AXASSERT(cache->isSpriteFramesWithFileLoaded("plist which not exist") == false, "Plist does not exist");
+    });
+    sequence.emplace_back([cache, file] {
+        cache->addSpriteFramesWithFile(file);
+        AXASSERT(cache->isSpriteFramesWithFileLoaded(file) == true, "Plist should be full after loading");
+    });
+    sequence.emplace_back([cache, file] {
+        // Non-existant frame removal
+        cache->removeSpriteFrameByName("not_exists_grossinis_sister.png");
+        AXASSERT(cache->isSpriteFramesWithFileLoaded(file) == true, "Plist should still be full");
+    });
+    sequence.emplace_back([cache, file] {
+        cache->removeSpriteFrameByName("grossinis_sister2.png");
+        AXASSERT(cache->findFrame("grossinis_sister2.png") == nullptr, "Frame should not exist");
+        AXASSERT(cache->isSpriteFramesWithFileLoaded(file) == false,
+                 "Plist should not be full after removing a frame belonging to it");
+    });
+    sequence.emplace_back([cache, file] {
+        cache->addSpriteFramesWithFile(file);
+        AXASSERT(cache->isSpriteFramesWithFileLoaded(file) == true, "Plist should be full after reloading");
+        AXASSERT(cache->findFrame("grossinis_sister2.png") != nullptr, "Frame should not exist");
+    });
+    sequence.emplace_back([] {
+        Director::getInstance()->purgeCachedData();
+    });
+    sequence.emplace_back([cache, file] {
+        AXASSERT(cache->isSpriteFramesWithFileLoaded(file) == false, "Plist should not be full after purge");
+    });
+    sequence.emplace_back([cache, file] {
+        cache->addSpriteFramesWithFile(file);
+        AXASSERT(cache->findFrame("grossinis_sister1.png") != nullptr, "Frame should exist");
+        AXASSERT(cache->findFrame("grossinis_sister2.png") != nullptr, "Frame should exist");
+        AXASSERT(cache->isSpriteFramesWithFileLoaded(file) == true, "Plist should be full");
+    });
 
-    AXASSERT(cache->isSpriteFramesWithFileLoaded("plist which not exists") == false, "Plist not exists");
+    unschedule(_scheduleKey);
+    _idx = 0;
 
-    cache->addSpriteFramesWithFile(file);
-    AXASSERT(cache->isSpriteFramesWithFileLoaded(file) == true, "Plist should be full after loaded");
-
-    cache->removeSpriteFrameByName("not_exists_grossinis_sister.png");
-    AXASSERT(cache->isSpriteFramesWithFileLoaded(file) == true, "Plist should not be still full");
-
-    cache->removeSpriteFrameByName("grossinis_sister1.png");
-    AXASSERT(cache->isSpriteFramesWithFileLoaded(file) == false, "Plist should not be full after remove any sprite");
-
-    cache->addSpriteFramesWithFile(file);
-    AXASSERT(cache->isSpriteFramesWithFileLoaded(file) == true, "Plist should be full after reloaded");
+    schedule([this, sequence](float) {
+        if (_idx < sequence.size())
+        {
+            AXLOGD("{} sequence: {}", _scheduleKey, _idx);
+            sequence[_idx]();
+            ++_idx;
+        }
+        else
+        {
+            unschedule(_scheduleKey);
+        }
+    }, 0.f, _scheduleKey);
 }
 
 class GenericJsonArraySpriteSheetLoader : public SpriteSheetLoader
