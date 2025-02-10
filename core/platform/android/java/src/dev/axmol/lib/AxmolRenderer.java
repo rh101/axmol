@@ -38,7 +38,7 @@ public class AxmolRenderer implements GLSurfaceView.Renderer {
 
     // The final animation interval which is used in 'onDrawFrame'
     private static long sAnimationInterval = (long) (1.0f / 60f * AxmolRenderer.NANOSECONDSPERSECOND);
-    private static float FPS_CONTROL_THRESHOLD = 1.0f / 1200.0f * AxmolRenderer.NANOSECONDSPERSECOND;
+    private static long FPS_CONTROL_THRESHOLD = (long) (1.0f / 1200.0f * AxmolRenderer.NANOSECONDSPERSECOND);
 
     // ===========================================================
     // Fields
