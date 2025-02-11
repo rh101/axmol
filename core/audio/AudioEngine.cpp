@@ -216,6 +216,21 @@ void AudioEngine::setVolume(AUDIO_ID audioID, float volume)
     }
 }
 
+void AudioEngine::setPitch(AUDIO_ID audioID, float pitch)
+{
+    auto it = _audioIDInfoMap.find(audioID);
+    if (it != _audioIDInfoMap.end())
+    {
+        pitch = std::clamp(pitch, 0.5f, 2.0f);
+
+        if (it->second.pitch != pitch)
+        {
+            _audioEngineImpl->setPitch(audioID, pitch);
+            it->second.pitch = pitch;
+        }
+    }
+}
+
 void AudioEngine::pause(AUDIO_ID audioID)
 {
     auto it = _audioIDInfoMap.find(audioID);
