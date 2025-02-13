@@ -10,6 +10,7 @@
 
 ### Improvements
 
+- Improve Label: underline, strikethrough and color by @aismann in https://github.com/axmolengine/axmol/pull/2382
 - Disable Spine references if Spine is not enabled by @rh101 in https://github.com/axmolengine/axmol/pull/2346
 - Increase MAX_AUDIOINSTANCES value to 128 in AudioEngine by @MartinLutherSu in https://github.com/axmolengine/axmol/pull/2348
 - Clipper2 ver. 1.5.0 by @aismann in https://github.com/axmolengine/axmol/pull/2350
@@ -32,6 +33,8 @@
   - Improve gradle scripts
 - Remove unused 3rd lib: yaml-cpp by @halx99
 - Fix wasm compile warnings
+- Added methods to modify audio pitch by @Janglee123 in https://github.com/axmolengine/axmol/pull/2381
+- Improve webgl render fps by @halx99 in https://github.com/axmolengine/axmol/pull/2379
 
 ### SDKs updates
 
